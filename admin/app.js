@@ -83,17 +83,40 @@ const DEFAULT_DATA = {
 
 let appData = null;
 let pinRevealed = false;
+let dataSource = 'mock'; // 'live' | 'local' | 'mock'
+
+// ===================== PHASE 1: เชื่อมต่อ Backend จริง (AI Vision Gate v6.1) =====================
+// API_URL = Web app URL ที่ deploy จาก Apps Script project "AIVSG-V6"
+// v6.1 ไม่มีการเช็ค key สำหรับ action อ่านข้อมูล จึงไม่ต้องส่ง key
+const API_URL = 'https://script.google.com/macros/s/AKfycbzrmDc7dvwMlhkm6vdXVABIxQq22qMI270DUdQ7Yab2jZLHSzFM2hcPYzYDqCG5VXQ6nw/exec';
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('data.json')
-    .then(res => { if (!res.ok) throw new Error('no data.json'); return res.json(); })
-    .then(data => { appData = data; init(); })
-    .catch(() => { appData = JSON.parse(JSON.stringify(DEFAULT_DATA)); init(); });
+  loadLiveData()
+    .then(data => { appData = data; dataSource = 'live'; init(); })
+    .catch(() => {
+      // ถ้า API ใช้ไม่ได้ (ยังไม่ deploy / network ขัดข้อง) -> ลองไฟล์ data.json ในเครื่อง
+      fetch('data.json')
+        .then(res => { if (!res.ok) throw new Error('no data.json'); return res.json(); })
+        .then(data => { appData = data; dataSource = 'local'; init(); })
+        .catch(() => { appData = JSON.parse(JSON.stringify(DEFAULT_DATA)); dataSource = 'mock'; init(); });
+    });
 });
+
+function loadLiveData(){
+  if (!API_URL) return Promise.reject(new Error('no API_URL'));
+  const url = API_URL + '?action=getAll';
+  return fetch(url)
+    .then(res => { if (!res.ok) throw new Error('API HTTP error'); return res.json(); })
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      return data;
+    });
+}
 
 function init(){
   renderSidebar();
+  renderDataSourceBadge();
   setupNav();
   renderOverview();
   renderResidents();
@@ -119,6 +142,21 @@ function updateClock(){
 function renderSidebar(){
   document.getElementById('sidebar-village').textContent = appData.village.name;
 }
+function renderDataSourceBadge(){
+  const el = document.getElementById('data-source');
+  const textEl = document.getElementById('data-source-text');
+  const dot = el.querySelector('.dot');
+  if (dataSource === 'live'){
+    dot.className = 'dot ok';
+    textEl.textContent = 'เชื่อมต่อข้อมูลจริง';
+  } else if (dataSource === 'local'){
+    dot.className = 'dot warn';
+    textEl.textContent = 'โหมดสำรอง (data.json)';
+  } else {
+    dot.className = 'dot faint';
+    textEl.textContent = 'โหมดทดสอบ (mock data)';
+  }
+}
 function setupNav(){
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -143,7 +181,7 @@ function renderOverview(){
 }
 function renderHourlyChart(){
   const data = appData.overview.hourly;
-  const max = Math.max(...data.map(d => d.count));
+  const max = Math.max(1, ...data.map(d => d.count));
   document.getElementById('hourly-chart').innerHTML = data.map(d => {
     const h = Math.max(4, Math.round((d.count / max) * 100));
     return `
@@ -171,8 +209,13 @@ function activityRowHTML(entry){
     </div>`;
 }
 function renderOverviewActivity(){
-  document.getElementById('overview-activity').innerHTML =
-    appData.overview.recentActivity.map(activityRowHTML).join('');
+  const activity = appData.overview.recentActivity || [];
+  if (activity.length === 0){
+    document.getElementById('overview-activity').innerHTML =
+      `<div class="empty-state">ยังไม่มีข้อมูลเข้า-ออก — จะเริ่มแสดงเมื่อเชื่อมต่อ Gate Station / Guard Dashboard (เฟส 2)</div>`;
+    return;
+  }
+  document.getElementById('overview-activity').innerHTML = activity.map(activityRowHTML).join('');
 }
 
 // ---------- Residents ----------
@@ -190,6 +233,7 @@ function residentRowHTML(r){
 }
 function renderResidents(){
   document.getElementById('residents-tbody').innerHTML = appData.residents.map(residentRowHTML).join('');
+  document.getElementById('residents-count').textContent = appData.residents.length;
 }
 function setupPinToggle(){
   const btn = document.getElementById('toggle-pin');
@@ -215,6 +259,7 @@ function vehicleRowHTML(v){
 }
 function renderVehicles(){
   document.getElementById('vehicles-tbody').innerHTML = appData.vehicles.map(vehicleRowHTML).join('');
+  document.getElementById('vehicles-count').textContent = appData.vehicles.length;
 }
 
 // ---------- Table search filter ----------
@@ -250,7 +295,7 @@ function renderReports(){
 }
 function renderWeeklyChart(){
   const data = appData.reports.weekly;
-  const max = Math.max(...data.flatMap(d => [d.entries, d.exits]));
+  const max = Math.max(1, ...data.flatMap(d => [d.entries, d.exits]));
   document.getElementById('weekly-chart').innerHTML = data.map(d => {
     const he = Math.max(4, Math.round((d.entries / max) * 100));
     const hx = Math.max(4, Math.round((d.exits / max) * 100));
