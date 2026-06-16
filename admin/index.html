@@ -44,6 +44,7 @@
       </button>
     </nav>
 
+    <div class="data-source" id="data-source"><span class="dot faint"></span><span id="data-source-text">กำลังเชื่อมต่อ...</span></div>
     <div class="clock" id="clock">--:--:--</div>
   </aside>
 
@@ -74,7 +75,7 @@
         <div class="page-sub">ข้อมูลบ้านเลขที่ เจ้าของบ้าน และ PIN สำหรับเข้า-ออก</div>
       </div>
       <div class="label-row">
-        <span class="label">รายชื่อลูกบ้าน (11 บ้าน)</span>
+        <span class="label">รายชื่อลูกบ้าน (<span id="residents-count">11</span> บ้าน)</span>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <input type="text" class="table-search" id="residents-search" placeholder="ค้นหาบ้านเลขที่ / ชื่อ...">
           <button class="btn-sm" id="toggle-pin">แสดง PIN</button>
@@ -104,7 +105,7 @@
         <div class="page-sub">ฐานข้อมูลรถที่ลงทะเบียนทั้งหมดในระบบ</div>
       </div>
       <div class="label-row">
-        <span class="label">รถที่ลงทะเบียน (16 คัน)</span>
+        <span class="label">รถที่ลงทะเบียน (<span id="vehicles-count">16</span> คัน)</span>
         <input type="text" class="table-search" id="vehicles-search" placeholder="ค้นหาทะเบียน / บ้านเลขที่ / เจ้าของ...">
       </div>
       <div class="table-wrap">
@@ -116,6 +117,7 @@
               <th>บ้านเลขที่</th>
               <th>โทรศัพท์</th>
               <th>รายละเอียดรถ</th>
+              <th>ลงทะเบียนโดย</th>
             </tr>
           </thead>
           <tbody id="vehicles-tbody"><!-- rendered by app.js --></tbody>
