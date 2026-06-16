@@ -250,18 +250,25 @@ function setupPinToggle(){
 
 // ---------- Vehicles ----------
 function vehicleRowHTML(v){
+  // รองรับทั้ง schema เก่า (info) และใหม่ (brand/color/type/regBy/method/regDate)
+  const detail = v.brand ? `${v.brand} สี${v.color||'—'} (${v.type||'—'})` : (v.info || '—');
+  const regInfo = v.regBy ? `${v.regBy} · ${v.method||'—'}` : '—';
   return `
     <tr data-search="${(v.plate + ' ' + v.house + ' ' + v.owner).toLowerCase()}">
       <td class="mono">${v.plate}</td>
       <td>${v.owner}</td>
       <td class="mono">${v.house}</td>
       <td class="mono dim">${v.phone}</td>
-      <td class="dim">${v.info}</td>
+      <td class="dim">${detail}</td>
+      <td class="dim" style="font-size:11px">${regInfo}</td>
     </tr>`;
 }
 function renderVehicles(){
-  document.getElementById('vehicles-tbody').innerHTML = appData.vehicles.map(vehicleRowHTML).join('');
-  document.getElementById('vehicles-count').textContent = appData.vehicles.length;
+  const tbody = document.getElementById('vehicles-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = appData.vehicles.map(vehicleRowHTML).join('');
+  const countEl = document.getElementById('vehicles-count');
+  if (countEl) countEl.textContent = appData.vehicles.length;
 }
 
 // ---------- Table search filter ----------
