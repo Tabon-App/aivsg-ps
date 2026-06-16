@@ -145,7 +145,9 @@ function renderSidebar(){
 function renderDataSourceBadge(){
   const el = document.getElementById('data-source');
   const textEl = document.getElementById('data-source-text');
+  if (!el || !textEl) return;
   const dot = el.querySelector('.dot');
+  if (!dot) return;
   if (dataSource === 'live'){
     dot.className = 'dot ok';
     textEl.textContent = 'เชื่อมต่อข้อมูลจริง';
