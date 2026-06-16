@@ -88,7 +88,7 @@ let dataSource = 'mock'; // 'live' | 'local' | 'mock'
 // ===================== PHASE 1: เชื่อมต่อ Backend จริง (AI Vision Gate v6.1) =====================
 // API_URL = Web app URL ที่ deploy จาก Apps Script project "AIVSG-V6"
 // v6.1 ไม่มีการเช็ค key สำหรับ action อ่านข้อมูล จึงไม่ต้องส่ง key
-const API_URL = 'https://script.google.com/macros/s/AKfycbzrmDc7dvwMlhkm6vdXVABIxQq22qMI270DUdQ7Yab2jZLHSzFM2hcPYzYDqCG5VXQ6nw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxiPp-xyVNOw6Dm6L9Il3I2b9ynhu02L_VTBmTAXSMh7WHijR-QttRXK6NzBaZUb0k3Nw/exec';
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', () => {
