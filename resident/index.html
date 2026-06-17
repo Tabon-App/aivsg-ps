@@ -6,309 +6,269 @@
 <title>AI Vision Gate — Resident App</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;padding-bottom:70px}
-
-/* TOP BAR */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06)}
-.user-info{display:flex;align-items:center;gap:10px}
-.avatar{width:36px;height:36px;background:linear-gradient(135deg,#00c878,#00a060);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.user-name{font-size:14px;font-weight:700}
-.user-house{font-size:11px;color:rgba(255,255,255,0.4)}
-.notif-btn{width:36px;height:36px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;position:relative}
-.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:#ff5050;border-radius:50%;display:none}
+body{background:#0b0f1c;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;padding-bottom:75px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:0;z-index:50}
+.user-wrap{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;background:linear-gradient(135deg,#00c878,#007a4a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.user-name{font-size:14px;font-weight:800}
+.user-house{font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px}
+.notif-btn{position:relative;width:38px;height:38px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
+.notif-dot{position:absolute;top:7px;right:7px;width:8px;height:8px;background:#ff5050;border-radius:50%;border:1px solid #0b0f1c;display:none}
 .notif-dot.show{display:block}
-
-/* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0d1220;border-top:1px solid rgba(255,255,255,0.07);z-index:50}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;gap:3px;transition:color 0.2s}
-.nav-item .nav-icon{font-size:20px}
-.nav-item .nav-label{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3);letter-spacing:0.3px}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;gap:3px}
+.nav-icon{font-size:20px}
+.nav-label{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3);letter-spacing:0.3px}
 .nav-item.active .nav-label{color:#00c878}
-
-/* PAGES */
-.page{display:none;padding:16px}
+.page{display:none;padding:14px}
 .page.active{display:block}
-
-/* SECTION HEADER */
-.sec-header{margin-bottom:16px}
-.sec-title{font-size:18px;font-weight:700}
-.sec-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px}
-
-/* STAT CARDS */
-.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.sec-title{font-size:18px;font-weight:800;letter-spacing:-0.3px;margin-bottom:3px}
+.sec-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:14px}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px}
-.stat-val{font-size:26px;font-weight:800;color:#00c878}
-.stat-lbl{font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px}
-
-/* NOTIFICATION CARD */
-.notif-card{border-radius:14px;border:1px solid;padding:16px;margin-bottom:10px;position:relative}
-.notif-card.visitor{background:rgba(255,160,0,0.07);border-color:rgba(255,160,0,0.2)}
-.notif-card.entry{background:rgba(0,200,120,0.06);border-color:rgba(0,200,120,0.15)}
-.notif-card.exit{background:rgba(100,100,255,0.06);border-color:rgba(100,100,255,0.15)}
-.notif-card.expired{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.07);opacity:0.6}
-.notif-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.notif-type{font-size:11px;font-weight:700;letter-spacing:0.5px;padding:3px 8px;border-radius:20px}
-.notif-type.visitor{background:rgba(255,160,0,0.15);color:#ffa000}
-.notif-type.entry{background:rgba(0,200,120,0.12);color:#00c878}
-.notif-type.exit{background:rgba(100,100,255,0.15);color:#aaaaff}
-.notif-time{font-size:11px;color:rgba(255,255,255,0.3)}
-.notif-plate{font-size:20px;font-weight:800;font-family:monospace;letter-spacing:1px;margin-bottom:4px}
-.notif-info{font-size:12px;color:rgba(255,255,255,0.5)}
-.approve-btns{display:flex;gap:8px;margin-top:12px}
-.btn-approve{flex:1;padding:12px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
-.btn-reject{flex:1;padding:12px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.25);border-radius:10px;color:#ff5050;font-size:13px;font-weight:700;cursor:pointer}
-.cd-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,160,0,0.12);border:1px solid rgba(255,160,0,0.2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700;color:#ffa000;margin-top:8px}
-
-/* VEHICLE CARDS */
-.vehicle-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
-.vehicle-icon{width:44px;height:44px;background:rgba(0,200,120,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.vehicle-plate{font-size:16px;font-weight:800;font-family:monospace;letter-spacing:1px}
-.vehicle-detail{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
-.vehicle-reg{font-size:10px;color:rgba(0,200,120,0.6);margin-top:3px}
-
-/* LOG ITEMS */
-.log-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.stat-val{font-size:28px;font-weight:900;color:#00c878;line-height:1}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
+.alert-banner{background:rgba(255,80,0,0.08);border:1px solid rgba(255,80,0,0.25);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.alert-title{font-size:13px;font-weight:700;color:#ff6030;margin-bottom:2px}
+.alert-sub{font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px}
+.approve-btns{display:flex;gap:6px}
+.btn-approve{flex:1;padding:9px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.btn-reject{flex:1;padding:9px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.25);border-radius:8px;color:#ff5050;font-size:12px;font-weight:700;cursor:pointer}
+.section-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.log-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:11px;padding:11px 13px;margin-bottom:6px}
 .log-row{display:flex;justify-content:space-between;align-items:center}
-.log-plate-big{font-size:15px;font-weight:700;font-family:monospace}
+.log-plate{font-size:14px;font-weight:800;font-family:monospace;letter-spacing:1px}
 .log-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
-.log-badge.resident{background:rgba(0,200,120,0.12);color:#00c878}
-.log-badge.visitor{background:rgba(255,160,0,0.12);color:#ffa000}
-.log-times{display:flex;gap:12px;margin-top:6px}
-.log-time-item{font-size:11px;color:rgba(255,255,255,0.4)}
-.log-time-item span{color:#fff;font-weight:600;margin-left:4px}
-
-/* PRE-REGISTER FORM */
-.form-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:14px}
-.form-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
-.field input, .field select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 14px;font-size:14px;color:#fff;outline:none;font-family:inherit}
-.field input:focus, .field select:focus{border-color:rgba(0,200,120,0.4)}
+.log-badge.res{background:rgba(0,200,120,0.12);color:#00c878}
+.log-badge.vis{background:rgba(255,160,0,0.12);color:#ffa000}
+.log-times{display:flex;gap:12px;margin-top:5px}
+.log-t{font-size:10px;color:rgba(255,255,255,0.35)}
+.log-t span{color:rgba(255,255,255,0.7);font-weight:600;margin-left:3px}
+/* VEHICLES */
+.add-btn{width:100%;padding:12px;background:rgba(0,200,120,0.07);border:1px dashed rgba(0,200,120,0.25);border-radius:12px;color:#00c878;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px}
+.vehicle-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:13px 14px;margin-bottom:8px}
+.v-header{display:flex;justify-content:space-between;align-items:flex-start}
+.v-plate{font-size:16px;font-weight:900;font-family:monospace;letter-spacing:1px}
+.v-actions{display:flex;gap:6px}
+.btn-edit{padding:5px 10px;background:rgba(255,160,0,0.1);border:1px solid rgba(255,160,0,0.2);border-radius:7px;color:#ffa000;font-size:11px;font-weight:700;cursor:pointer}
+.btn-del{padding:5px 10px;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);border-radius:7px;color:#ff5050;font-size:11px;font-weight:700;cursor:pointer}
+.v-detail{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
+.v-reg{font-size:10px;color:rgba(0,200,120,0.6);margin-top:3px}
+/* FORM */
+.form-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:14px;margin-bottom:12px;display:none}
+.form-card.show{display:block}
+.form-title{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
+.field label .req{color:#ff5050;margin-left:2px}
+.field label .opt{color:rgba(255,255,255,0.2);font-weight:400;margin-left:4px;font-size:9px}
+.field input,.field select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px 13px;font-size:14px;color:#fff;outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:rgba(0,200,120,0.4)}
 .field input::placeholder{color:rgba(255,255,255,0.2)}
 .field select option{background:#141828}
-.btn-submit{width:100%;padding:14px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
-
-/* PRE-GUEST LIST */
-.preguest-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.preguest-name{font-size:14px;font-weight:700}
-.preguest-plate{font-size:13px;font-family:monospace;color:#00c878;margin-top:2px}
-.preguest-meta{font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px}
-.status-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px}
+.field-row{display:flex;gap:8px}
+.field-row .field{flex:1}
+.province-wrap{position:relative}
+.province-suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:#1a2035;border:1px solid rgba(0,200,120,0.25);border-radius:9px;margin-top:3px;z-index:20;max-height:160px;overflow-y:auto}
+.p-item{padding:9px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04)}
+.p-item:last-child{border:none}
+.p-item:hover{background:rgba(0,200,120,0.08)}
+.p-match{color:#00c878;font-weight:700}
+.btn-save{width:100%;padding:12px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-cancel-form{width:100%;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:9px;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;margin-top:6px}
+/* NOTIF */
+.notif-card{border-radius:13px;border:1px solid;padding:14px;margin-bottom:10px}
+.notif-card.pending{background:rgba(255,80,0,0.07);border-color:rgba(255,80,0,0.2)}
+.notif-card.entry{background:rgba(0,200,120,0.05);border-color:rgba(0,200,120,0.15)}
+.notif-type{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;display:inline-block;margin-bottom:8px}
+.notif-type.pending{background:rgba(255,80,0,0.15);color:#ff6030}
+.notif-type.entry{background:rgba(0,200,120,0.12);color:#00c878}
+.notif-plate{font-size:20px;font-weight:900;font-family:monospace;letter-spacing:1px;margin-bottom:3px}
+.notif-info{font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:10px}
+.notif-photos{display:flex;gap:6px;margin-bottom:10px}
+.notif-photo{width:56px;height:56px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:18px}
+/* PREREG */
+.preguest-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:11px;padding:11px 13px;margin-bottom:7px}
+.pg-name{font-size:13px;font-weight:700}
+.pg-plate{font-size:13px;font-family:monospace;color:#00c878;margin-top:2px}
+.pg-meta{font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px}
+.status-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:5px}
 .status-badge.wait{background:rgba(255,160,0,0.12);color:#ffa000}
 .status-badge.in{background:rgba(0,200,120,0.12);color:#00c878}
-.status-badge.out{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4)}
-
-/* EMPTY STATE */
-.empty{text-align:center;padding:40px 20px;color:rgba(255,255,255,0.25)}
-.empty-icon{font-size:40px;margin-bottom:10px}
-.empty-txt{font-size:13px}
-
+.status-badge.out{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35)}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(0,200,120,0.07);border:1px solid rgba(0,200,120,0.15);border-radius:20px;font-size:11px;color:#00c878;cursor:pointer;font-weight:600;margin-bottom:12px}
+.empty{text-align:center;padding:32px 20px;color:rgba(255,255,255,0.2)}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-txt{font-size:12px}
 /* LOADING */
 .loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 .loading-overlay.show{display:flex}
-.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.08);border-top-color:#00c878;border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.08);border-top-color:#00c878;border-radius:50%;animation:spin 0.8s linear infinite}
 .load-txt{font-size:13px;color:rgba(255,255,255,0.5)}
-
-/* TOAST */
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2035;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 18px;font-size:13px;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1}
-
-/* ALERT BANNER */
-.alert-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,#ff6b00,#ff3000);padding:16px;text-align:center;box-shadow:0 4px 20px rgba(255,80,0,0.4)}
-.alert-banner.show{display:block}
-.alert-title{font-size:16px;font-weight:800;margin-bottom:4px}
-.alert-sub{font-size:12px;opacity:0.85}
-
-/* PULL REFRESH */
-.refresh-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.15);border-radius:20px;font-size:12px;color:#00c878;cursor:pointer;margin-bottom:12px;font-weight:600}
 </style>
 </head>
 <body>
 
-<!-- ALERT BANNER (แขกกดออก) -->
-<div class="alert-banner" id="alert-banner">
-  <div class="alert-title">🚨 แขกของท่านขอออกจากหมู่บ้าน!</div>
-  <div class="alert-sub" id="alert-sub">กรุณายืนยันในแท็บ "การแจ้งเตือน"</div>
-</div>
-
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="user-info">
+  <div class="user-wrap">
     <div class="avatar">🏠</div>
     <div>
       <div class="user-name" id="user-name">กำลังโหลด...</div>
       <div class="user-house" id="user-house">บ้านเลขที่ —</div>
     </div>
   </div>
-  <div class="notif-btn" onclick="goPage('notifications')">
-    🔔
-    <div class="notif-dot" id="notif-dot"></div>
-  </div>
+  <div class="notif-btn" onclick="goPage('notif')">🔔<div class="notif-dot" id="notif-dot"></div></div>
 </div>
-
-<!-- PAGES -->
 
 <!-- HOME -->
 <div class="page active" id="page-home">
-  <div class="sec-header">
-    <div class="sec-title">ภาพรวมบ้านของฉัน</div>
-    <div class="sec-sub" id="home-date"></div>
-  </div>
+  <div class="sec-title">หน้าหลัก</div>
+  <div class="sec-sub" id="home-date"></div>
   <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-val" id="home-vehicles">—</div>
-      <div class="stat-lbl">รถที่ลงทะเบียน</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="home-guests-today">—</div>
-      <div class="stat-lbl">แขกวันนี้</div>
-    </div>
+    <div class="stat-card"><div class="stat-val" id="home-vehicles">—</div><div class="stat-lbl">รถที่ลงทะเบียน</div></div>
+    <div class="stat-card"><div class="stat-val" id="home-guests">—</div><div class="stat-lbl">แขกที่นัดไว้</div></div>
   </div>
-  <!-- Recent Log -->
-  <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">ล่าสุด</div>
-  <div id="home-recent"></div>
+  <div id="home-alerts"></div>
+  <div class="section-label">ประวัติล่าสุด</div>
+  <div id="home-recent"><div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div></div>
 </div>
 
-<!-- NOTIFICATIONS -->
-<div class="page" id="page-notifications">
-  <div class="sec-header" style="display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <div class="sec-title">การแจ้งเตือน</div>
-      <div class="sec-sub">รออนุมัติจากท่าน</div>
-    </div>
-    <div class="refresh-btn" onclick="loadNotifications()">🔄 รีเฟรช</div>
-  </div>
-  <div id="notif-list"></div>
+<!-- NOTIF -->
+<div class="page" id="page-notif">
+  <div class="sec-title">แจ้งเตือน</div>
+  <div class="sec-sub">รออนุมัติจากท่าน</div>
+  <button class="refresh-btn" onclick="loadNotifications()">🔄 รีเฟรช</button>
+  <div id="notif-list"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-txt">ไม่มีการแจ้งเตือน</div></div></div>
 </div>
 
 <!-- VEHICLES -->
 <div class="page" id="page-vehicles">
-  <div class="sec-header">
-    <div class="sec-title">รถของฉัน</div>
-    <div class="sec-sub">รถที่ลงทะเบียนไว้ในระบบ</div>
+  <div class="sec-title">รถของฉัน</div>
+  <div class="sec-sub" id="v-sub">จัดการทะเบียนรถ</div>
+  <button class="add-btn" onclick="showVehicleForm()">+ เพิ่มรถใหม่</button>
+
+  <div class="form-card" id="vehicle-form">
+    <div class="form-title" id="form-title">🚗 เพิ่มรถใหม่</div>
+    <input type="hidden" id="edit-index" value="">
+    <div class="field-row">
+      <div class="field" style="flex:1.4">
+        <label>ทะเบียนรถ <span class="req">*</span></label>
+        <input type="text" id="f-plate" placeholder="เช่น กข 1234" style="font-family:monospace;letter-spacing:1px" autocomplete="off">
+      </div>
+      <div class="field" style="flex:1">
+        <label>ประเภทรถ <span class="req">*</span></label>
+        <select id="f-type">
+          <option value="รถยนต์">รถยนต์</option>
+          <option value="รถกระบะ">รถกระบะ</option>
+          <option value="มอเตอร์ไซค์">มอเตอร์ไซค์</option>
+          <option value="รถตู้">รถตู้</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>จังหวัด <span class="req">*</span></label>
+      <div class="province-wrap">
+        <input type="text" id="f-province" placeholder="พิมพ์เพื่อค้นหาจังหวัด..." autocomplete="off" oninput="filterProv(this.value,'f-prov-list')">
+        <div class="province-suggestions" id="f-prov-list"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>ยี่ห้อรถ <span class="opt">(ไม่บังคับ)</span></label>
+        <input type="text" id="f-brand" placeholder="เช่น Toyota">
+      </div>
+      <div class="field">
+        <label>สีรถ <span class="opt">(ไม่บังคับ)</span></label>
+        <input type="text" id="f-color" placeholder="เช่น ขาว">
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveVehicle()">✅ บันทึก</button>
+    <button class="btn-cancel-form" onclick="hideVehicleForm()">ยกเลิก</button>
   </div>
-  <div id="vehicles-list"></div>
+
+  <div id="vehicles-list"><div class="empty"><div class="empty-icon">🚗</div><div class="empty-txt">ยังไม่มีรถที่ลงทะเบียน</div></div></div>
 </div>
 
 <!-- HISTORY -->
 <div class="page" id="page-history">
-  <div class="sec-header" style="display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <div class="sec-title">ประวัติเข้า-ออก</div>
-      <div class="sec-sub">บ้านเลขที่ <span id="hist-house">—</span></div>
-    </div>
-    <div class="refresh-btn" onclick="loadHistory()">🔄 รีเฟรช</div>
-  </div>
-  <div id="history-list"></div>
+  <div class="sec-title">ประวัติเข้า-ออก</div>
+  <div class="sec-sub" id="hist-sub">บ้านเลขที่ —</div>
+  <button class="refresh-btn" onclick="loadHistory()">🔄 รีเฟรช</button>
+  <div id="history-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div></div>
 </div>
 
-<!-- PRE-REGISTER -->
+<!-- PREREG -->
 <div class="page" id="page-prereg">
-  <div class="sec-header">
-    <div class="sec-title">นัดแขกล่วงหน้า</div>
-    <div class="sec-sub">แขกที่นัดไว้จะเข้าได้อัตโนมัติ</div>
-  </div>
-
-  <!-- Form -->
-  <div class="form-card">
+  <div class="sec-title">นัดแขกล่วงหน้า</div>
+  <div class="sec-sub">แขกที่นัดไว้จะเข้าได้อัตโนมัติ</div>
+  <div class="form-card show">
     <div class="form-title">📝 เพิ่มแขกใหม่</div>
     <div class="field">
-      <label>ชื่อแขก</label>
-      <input type="text" id="guest-name" placeholder="เช่น นายสมชาย ใจดี">
+      <label>ชื่อแขก <span class="req">*</span></label>
+      <input type="text" id="g-name" placeholder="เช่น นายสมชาย ใจดี">
+    </div>
+    <div class="field-row">
+      <div class="field" style="flex:1.4">
+        <label>ทะเบียนรถ <span class="req">*</span></label>
+        <input type="text" id="g-plate" placeholder="เช่น กข 1234" style="font-family:monospace">
+      </div>
+      <div class="field" style="flex:1">
+        <label>จังหวัด <span class="req">*</span></label>
+        <div class="province-wrap">
+          <input type="text" id="g-province" placeholder="พิมพ์..." autocomplete="off" oninput="filterProv(this.value,'g-prov-list')">
+          <div class="province-suggestions" id="g-prov-list"></div>
+        </div>
+      </div>
     </div>
     <div class="field">
-      <label>ทะเบียนรถ</label>
-      <input type="text" id="guest-plate" placeholder="เช่น กข 1234 กรุงเทพ" style="font-family:monospace">
+      <label>วันที่นัด <span class="req">*</span></label>
+      <input type="date" id="g-date">
     </div>
-    <div class="field">
-      <label>วันที่นัด</label>
-      <input type="date" id="guest-date">
-    </div>
-    <button class="btn-submit" onclick="addGuest()">✅ บันทึกการนัด</button>
+    <button class="btn-save" onclick="addGuest()">✅ บันทึกการนัด</button>
   </div>
-
-  <!-- Guest List -->
-  <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">รายการนัดทั้งหมด</div>
-  <div id="preguest-list"></div>
+  <div class="section-label">รายการนัดทั้งหมด</div>
+  <div id="preguest-list"><div class="empty"><div class="empty-icon">📅</div><div class="empty-txt">ยังไม่มีแขกที่นัดไว้</div></div></div>
 </div>
 
-<!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <div class="nav-item active" id="nav-home" onclick="goPage('home')">
-    <div class="nav-icon">🏠</div>
-    <div class="nav-label">หน้าหลัก</div>
-  </div>
-  <div class="nav-item" id="nav-notifications" onclick="goPage('notifications')">
-    <div class="nav-icon">🔔</div>
-    <div class="nav-label">แจ้งเตือน</div>
-  </div>
-  <div class="nav-item" id="nav-vehicles" onclick="goPage('vehicles')">
-    <div class="nav-icon">🚗</div>
-    <div class="nav-label">รถของฉัน</div>
-  </div>
-  <div class="nav-item" id="nav-history" onclick="goPage('history')">
-    <div class="nav-icon">📋</div>
-    <div class="nav-label">ประวัติ</div>
-  </div>
-  <div class="nav-item" id="nav-prereg" onclick="goPage('prereg')">
-    <div class="nav-icon">📅</div>
-    <div class="nav-label">นัดแขก</div>
-  </div>
+  <div class="nav-item active" id="nav-home" onclick="goPage('home')"><div class="nav-icon">🏠</div><div class="nav-label">หน้าหลัก</div></div>
+  <div class="nav-item" id="nav-notif" onclick="goPage('notif')"><div class="nav-icon">🔔</div><div class="nav-label">แจ้งเตือน</div></div>
+  <div class="nav-item" id="nav-vehicles" onclick="goPage('vehicles')"><div class="nav-icon">🚗</div><div class="nav-label">รถของฉัน</div></div>
+  <div class="nav-item" id="nav-history" onclick="goPage('history')"><div class="nav-icon">📋</div><div class="nav-label">ประวัติ</div></div>
+  <div class="nav-item" id="nav-prereg" onclick="goPage('prereg')"><div class="nav-icon">📅</div><div class="nav-label">นัดแขก</div></div>
 </nav>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div class="load-txt" id="load-txt">กำลังโหลด...</div>
-</div>
-
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="load-txt" id="load-txt">กำลังโหลด...</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// CONFIG
-// ============================================================
 const API_URL = 'https://script.google.com/macros/s/AKfycbxiPp-xyVNOw6Dm6L9Il3I2b9ynhu02L_VTBmTAXSMh7WHijR-QttRXK6NzBaZUb0k3Nw/exec';
+const PROVINCES = ['กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี','กรุงเทพมหานคร'];
 
-// ============================================================
-// STATE
-// ============================================================
-let user       = { username:'', house:'', name:'' };
+let user = { username:'', house:'', name:'' };
 let myVehicles = [];
-let myHistory  = [];
-let myPreGuests= [];
-let pendingNotifs = []; // แขกที่รอยืนยัน (simulate)
-let pollTimer  = null;
+let myHistory = [];
+let myPreGuests = [];
+let pollTimer = null;
 
-// ============================================================
-// INIT
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Get session
   try {
     const s = JSON.parse(sessionStorage.getItem('aivsg_user') || '{}');
     if (!s.username){ window.location.href = '../'; return; }
     user = s;
   } catch(e){ window.location.href = '../'; return; }
-
   document.getElementById('user-name').textContent = user.name || user.username;
   document.getElementById('user-house').textContent = 'บ้านเลขที่ ' + (user.house || '—');
-  document.getElementById('hist-house').textContent = user.house || '—';
-
-  // Set default date for form
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('guest-date').value = today;
-
-  // Set today date display
+  document.getElementById('v-sub').textContent = 'จัดการทะเบียนรถบ้าน ' + (user.house || '');
+  document.getElementById('hist-sub').textContent = 'บ้าน ' + (user.house || '—');
   const d = new Date();
-  document.getElementById('home-date').textContent =
-    d.toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
+  document.getElementById('home-date').textContent = d.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('g-date').value = new Date().toISOString().split('T')[0];
   loadAll();
-
-  // Poll สำหรับ notification ใหม่ทุก 30 วิ
-  pollTimer = setInterval(pollNotifications, 30000);
+  pollTimer = setInterval(pollNotif, 30000);
 });
 
 async function loadAll(){
@@ -319,303 +279,237 @@ async function loadAll(){
   loadNotifications();
 }
 
-// ============================================================
-// NAVIGATION
-// ============================================================
 function goPage(page){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.getElementById('nav-'+page).classList.add('active');
-  if (page === 'notifications') {
-    document.getElementById('notif-dot').classList.remove('show');
-    loadNotifications();
-  }
+  if (page === 'notif'){ document.getElementById('notif-dot').classList.remove('show'); loadNotifications(); }
 }
 
-// ============================================================
 // DATA LOADERS
-// ============================================================
 async function loadVehicles(){
-  try {
-    const res = await getAPI('getMyVehicles', { house: user.house });
-    myVehicles = res.vehicles || [];
-    renderVehicles();
-  } catch(e){ console.error(e); }
+  try { const r=await jsonp('getMyVehicles',{house:user.house}); myVehicles=r.vehicles||[]; renderVehicles(); } catch(e){}
 }
-
 async function loadHistory(){
-  try {
-    const res = await getAPI('getHistory', { house: user.house });
-    myHistory = res.logs || [];
-    renderHistory();
-  } catch(e){ console.error(e); }
+  try { const r=await jsonp('getHistory',{house:user.house}); myHistory=r.logs||[]; renderHistory(); } catch(e){}
 }
-
 async function loadPreGuests(){
-  try {
-    const res = await getAPI('getPreGuests', { house: user.house });
-    myPreGuests = res.guests || [];
-    renderPreGuests();
-  } catch(e){ console.error(e); }
+  try { const r=await jsonp('getPreGuests',{house:user.house}); myPreGuests=r.guests||[]; renderPreGuests(); } catch(e){}
 }
-
-// ============================================================
-// NOTIFICATIONS (poll Active_Vehicles สำหรับแขกที่ "รอยืนยัน")
-// ============================================================
 async function loadNotifications(){
   try {
-    const res = await getAPI('getActive', {});
-    const all = res.vehicles || [];
-    // แขกที่รอยืนยัน = สถานะ "รอยืนยัน" หรือ type "ผู้มาติดต่อ"
-    const pending = all.filter(v =>
-      v.status === 'รอยืนยัน' ||
-      (v.type === 'ผู้มาติดต่อ' && (!v.status || v.status === 'รอยืนยัน'))
-    );
-    renderNotifications(pending, all);
-  } catch(e){ renderNotifications([], []); }
+    const r = await jsonp('getActive',{});
+    const pending = (r.vehicles||[]).filter(v=>v.status==='รอยืนยัน'||(v.type==='ผู้มาติดต่อ'&&(!v.status||v.status==='รอยืนยัน')));
+    renderNotifications(pending, r.vehicles||[]);
+  } catch(e){ renderNotifications([],[]); }
 }
-
-async function pollNotifications(){
+async function pollNotif(){
   try {
-    const res = await getAPI('getActive', {});
-    const pending = (res.vehicles||[]).filter(v =>
-      v.status === 'รอยืนยัน' || (v.type === 'ผู้มาติดต่อ' && !v.status)
-    );
-    if (pending.length > 0){
-      document.getElementById('notif-dot').classList.add('show');
-      // แสดง alert banner
-      const banner = document.getElementById('alert-banner');
-      document.getElementById('alert-sub').textContent = `ทะเบียน ${pending[0].plate} ขอเข้าหมู่บ้าน`;
-      banner.classList.add('show');
-      setTimeout(() => banner.classList.remove('show'), 8000);
-    }
+    const r = await jsonp('getActive',{});
+    const pending = (r.vehicles||[]).filter(v=>v.status==='รอยืนยัน');
+    if (pending.length) document.getElementById('notif-dot').classList.add('show');
   } catch(e){}
 }
 
-// ============================================================
 // RENDERERS
-// ============================================================
 function renderHome(){
   document.getElementById('home-vehicles').textContent = myVehicles.length;
-
-  // นับแขกวันนี้จาก history
-  const today = new Date().toLocaleDateString('th-TH');
-  const todayGuests = myHistory.filter(h => {
-    if (!h.entryTime) return false;
-    return h.type === 'ผู้มาติดต่อ';
-  }).length;
-  document.getElementById('home-guests-today').textContent = todayGuests;
-
-  // Recent log (5 รายการล่าสุด)
-  const recent = myHistory.slice(0, 5);
-  const el = document.getElementById('home-recent');
-  if (!recent.length){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div>`;
-    return;
-  }
-  el.innerHTML = recent.map(h => logCardHTML(h)).join('');
+  document.getElementById('home-guests').textContent = myPreGuests.filter(g=>g.status==='รอเข้า').length;
+  const recent = myHistory.slice(0,5);
+  document.getElementById('home-recent').innerHTML = recent.length ? recent.map(logCardHTML).join('') :
+    '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div>';
 }
 
 function renderNotifications(pending, all){
   const el = document.getElementById('notif-list');
-  // สร้าง notification list ผสม: แขกรอยืนยัน + log ล่าสุดของบ้านนี้
-  const myPending = pending; // ทั้งหมดที่รอ (ไม่กรองบ้านเพราะ resident เห็นแขกทั้งหมด)
-  const myRecent  = all.filter(v => v.type === 'ลูกบ้าน').slice(0, 3);
-
-  if (!myPending.length && !myRecent.length){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div><div class="empty-txt">ไม่มีการแจ้งเตือน</div></div>`;
-    return;
+  const myRecent = all.filter(v=>v.type==='ลูกบ้าน'&&v.house===user.house).slice(0,3);
+  if (!pending.length && !myRecent.length){
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-txt">ไม่มีการแจ้งเตือน</div></div>'; return;
   }
-
-  let html = '';
-
-  // แขกรอยืนยัน
-  myPending.forEach(v => {
-    html += `
-      <div class="notif-card visitor">
-        <div class="notif-header">
-          <span class="notif-type visitor">⚠️ รอการอนุมัติ</span>
-          <span class="notif-time">${v.entryTime||''}</span>
-        </div>
-        <div class="notif-plate">${v.plate}</div>
-        <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} · ${v.type}</div>
-        <div class="approve-btns">
-          <button class="btn-approve" onclick="approveGuest('${v.plate}')">✅ อนุญาตเข้า</button>
-          <button class="btn-reject" onclick="rejectGuest('${v.plate}')">✕ ปฏิเสธ</button>
-        </div>
-      </div>`;
-  });
-
-  // log ล่าสุดของลูกบ้านที่เพิ่งเข้า
-  myRecent.forEach(v => {
-    html += `
-      <div class="notif-card entry">
-        <div class="notif-header">
-          <span class="notif-type entry">✅ รถเข้าแล้ว</span>
-          <span class="notif-time">${v.entryTime||''}</span>
-        </div>
-        <div class="notif-plate">${v.plate}</div>
-        <div class="notif-info">${v.type} · บ้าน ${v.house||'—'}</div>
-      </div>`;
-  });
-
-  el.innerHTML = html || `<div class="empty"><div class="empty-icon">✅</div><div class="empty-txt">ทุกอย่างเรียบร้อย</div></div>`;
+  el.innerHTML = pending.map(v=>`
+    <div class="notif-card pending">
+      <span class="notif-type pending">⚠️ รอการอนุมัติ</span>
+      <div class="notif-plate">${v.plate}</div>
+      <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} · ${v.entryTime||''}</div>
+      <div class="notif-photos"><div class="notif-photo">🪪</div><div class="notif-photo">🚗</div><div class="notif-photo">🧑</div></div>
+      <div class="approve-btns">
+        <button class="btn-approve" onclick="approveGuest('${v.plate}')">✅ อนุญาต</button>
+        <button class="btn-reject" onclick="rejectGuest('${v.plate}')">✕ ปฏิเสธ</button>
+      </div>
+    </div>`).join('') +
+  myRecent.map(v=>`
+    <div class="notif-card entry">
+      <span class="notif-type entry">✅ รถเข้าแล้ว</span>
+      <div class="notif-plate">${v.plate}</div>
+      <div class="notif-info">ลูกบ้าน · AUTO · ${v.entryTime||''}</div>
+    </div>`).join('');
 }
 
 function renderVehicles(){
   const el = document.getElementById('vehicles-list');
-  if (!myVehicles.length){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🚗</div><div class="empty-txt">ยังไม่มีรถที่ลงทะเบียน</div></div>`;
-    return;
-  }
-  const icons = { 'รถยนต์':'🚗', 'รถกระบะ':'🛻', 'มอเตอร์ไซค์':'🏍️', 'รถตู้':'🚐' };
-  el.innerHTML = myVehicles.map(v => `
+  if (!myVehicles.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🚗</div><div class="empty-txt">ยังไม่มีรถที่ลงทะเบียน</div></div>'; return; }
+  const icons={'รถยนต์':'🚗','รถกระบะ':'🛻','มอเตอร์ไซค์':'🏍️','รถตู้':'🚐'};
+  el.innerHTML = myVehicles.map((v,i)=>`
     <div class="vehicle-card">
-      <div class="vehicle-icon">${icons[v.type]||'🚗'}</div>
-      <div style="flex:1">
-        <div class="vehicle-plate">${v.plate}</div>
-        <div class="vehicle-detail">${v.brand||'—'} ${v.color||''} · ${v.type||'—'}</div>
-        <div class="vehicle-reg">ลงทะเบียนโดย ${v.regBy||'—'} · ${v.method||'—'}</div>
+      <div class="v-header">
+        <div>
+          <div class="v-plate">${v.plate||''}</div>
+          <div class="v-detail">${icons[v.type]||'🚗'} ${v.brand||'—'} ${v.color?'· สี'+v.color:''} · ${v.type||'—'}</div>
+          <div class="v-reg">ลงทะเบียนโดย ${v.regBy||'—'} · ${v.method||'—'}</div>
+        </div>
+        <div class="v-actions">
+          <button class="btn-edit" onclick="editVehicle(${i})">✏️ แก้ไข</button>
+          <button class="btn-del" onclick="deleteVehicle(${i})">🗑️</button>
+        </div>
       </div>
     </div>`).join('');
 }
 
 function renderHistory(){
   const el = document.getElementById('history-list');
-  if (!myHistory.length){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div>`;
-    return;
-  }
-  el.innerHTML = myHistory.map(h => logCardHTML(h)).join('');
+  el.innerHTML = myHistory.length ? myHistory.map(logCardHTML).join('') :
+    '<div class="empty"><div class="empty-icon">📋</div><div class="empty-txt">ยังไม่มีประวัติ</div></div>';
 }
 
 function logCardHTML(h){
-  const isRes = h.type === 'ลูกบ้าน' || h.type === 'resident';
-  return `
-    <div class="log-card">
-      <div class="log-row">
-        <div class="log-plate-big">${h.plate||'—'}</div>
-        <span class="log-badge ${isRes?'resident':'visitor'}">${h.type||'—'}</span>
-      </div>
-      <div class="log-times">
-        <div class="log-time-item">เข้า<span>${h.entryTime||'—'}</span></div>
-        ${h.exitTime ? `<div class="log-time-item">ออก<span>${h.exitTime}</span></div>` : ''}
-      </div>
-    </div>`;
+  const isRes = h.type==='ลูกบ้าน'||h.type==='resident';
+  return `<div class="log-card">
+    <div class="log-row">
+      <div class="log-plate">${h.plate||'—'}</div>
+      <span class="log-badge ${isRes?'res':'vis'}">${h.type||'—'}</span>
+    </div>
+    <div class="log-times">
+      <div class="log-t">เข้า<span>${h.entryTime||'—'}</span></div>
+      ${h.exitTime?`<div class="log-t">ออก<span>${h.exitTime}</span></div>`:''}
+    </div>
+  </div>`;
 }
 
 function renderPreGuests(){
   const el = document.getElementById('preguest-list');
-  if (!myPreGuests.length){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-txt">ยังไม่มีแขกที่นัดไว้</div></div>`;
-    return;
-  }
-  const statusMap = { 'รอเข้า':'wait', 'เข้าแล้ว':'in', 'ออกแล้ว':'out' };
-  el.innerHTML = myPreGuests.map(g => `
+  if (!myPreGuests.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-txt">ยังไม่มีแขกที่นัดไว้</div></div>'; return; }
+  const sm={'รอเข้า':'wait','เข้าแล้ว':'in','ออกแล้ว':'out'};
+  el.innerHTML = myPreGuests.map(g=>`
     <div class="preguest-card">
-      <div class="preguest-name">${g.guestName||'—'}</div>
-      <div class="preguest-plate">${g.plate||'ไม่ระบุทะเบียน'}</div>
-      <div class="preguest-meta">วันที่นัด: ${g.date||'—'}</div>
-      <span class="status-badge ${statusMap[g.status]||'wait'}">${g.status||'รอเข้า'}</span>
+      <div class="pg-name">${g.guestName||'—'}</div>
+      <div class="pg-plate">${g.plate||'ไม่ระบุทะเบียน'}</div>
+      <div class="pg-meta">วันที่นัด: ${g.date||'—'}</div>
+      <span class="status-badge ${sm[g.status]||'wait'}">${g.status||'รอเข้า'}</span>
     </div>`).join('');
 }
 
-// ============================================================
+// VEHICLE FORM
+function showVehicleForm(){ document.getElementById('vehicle-form').classList.add('show'); document.getElementById('form-title').textContent='🚗 เพิ่มรถใหม่'; document.getElementById('edit-index').value=''; ['f-plate','f-province','f-brand','f-color'].forEach(id=>document.getElementById(id).value=''); document.getElementById('f-type').value='รถยนต์'; }
+function hideVehicleForm(){ document.getElementById('vehicle-form').classList.remove('show'); }
+
+function editVehicle(i){
+  const v = myVehicles[i];
+  showVehicleForm();
+  document.getElementById('form-title').textContent='✏️ แก้ไขรถ';
+  document.getElementById('edit-index').value = i;
+  // plate = "กข 1234 ขอนแก่น" → split
+  const parts = (v.plate||'').split(' ');
+  const province = parts.slice(-1)[0] || '';
+  const plateNum = parts.slice(0,-1).join(' ');
+  document.getElementById('f-plate').value = plateNum;
+  document.getElementById('f-province').value = province;
+  document.getElementById('f-type').value = v.type||'รถยนต์';
+  document.getElementById('f-brand').value = v.brand||'';
+  document.getElementById('f-color').value = v.color||'';
+}
+
+async function saveVehicle(){
+  const plate    = document.getElementById('f-plate').value.trim();
+  const province = document.getElementById('f-province').value.trim();
+  const type     = document.getElementById('f-type').value;
+  const brand    = document.getElementById('f-brand').value.trim();
+  const color    = document.getElementById('f-color').value.trim();
+  if (!plate)   { showToast('กรุณากรอกทะเบียนรถ'); return; }
+  if (!province){ showToast('กรุณาระบุจังหวัด'); return; }
+  const fullPlate = plate + ' ' + province;
+  showLoading('กำลังบันทึก...');
+  try {
+    await jsonp('registerVehicle', { plate:fullPlate, owner:user.name||user.username, house:user.house, phone:'', brand, color, type, regBy:user.username, method:'ลงทะเบียนผ่านแอป' });
+    hideLoading();
+    showToast('✅ บันทึกรถเรียบร้อย');
+    hideVehicleForm();
+    await loadVehicles();
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+async function deleteVehicle(i){
+  if (!confirm('ยืนยันลบรถ ' + myVehicles[i].plate + '?')) return;
+  showToast('⚠️ ฟีเจอร์ลบรถต้องแก้ Apps Script เพิ่ม — จะทำในรอบถัดไปครับ');
+}
+
 // ACTIONS
-// ============================================================
 async function approveGuest(plate){
   showLoading('กำลังอนุมัติ...');
   try {
-    await postAPI('updateVisitorStatus', { plate, status: 'ยืนยันแล้ว' });
-    // บันทึก logEntry
-    await postAPI('logEntry', {
-      plate, type:'ผู้มาติดต่อ', house: user.house, phone:'',
-      brand:'', color:'', approvedBy: user.username, status:'ยืนยันแล้ว', guestName:''
-    });
-    hideLoading();
-    showToast('✅ อนุมัติแล้ว — เปิดประตูให้แขก');
-    loadNotifications();
+    await jsonp('updateVisitorStatus',{plate,status:'ยืนยันแล้ว'});
+    await jsonp('logEntry',{plate,type:'ผู้มาติดต่อ',house:user.house,phone:'',brand:'',color:'',approvedBy:user.username,status:'ยืนยันแล้ว',guestName:''});
+    hideLoading(); showToast('✅ อนุมัติแล้ว — เปิดประตู'); loadNotifications();
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 async function rejectGuest(plate){
   showLoading('กำลังปฏิเสธ...');
   try {
-    await postAPI('updateVisitorStatus', { plate, status: 'ปฏิเสธแล้ว' });
-    hideLoading();
-    showToast('🚫 ปฏิเสธแล้ว — แจ้ง รปภ.');
-    loadNotifications();
+    await jsonp('updateVisitorStatus',{plate,status:'ปฏิเสธแล้ว'});
+    hideLoading(); showToast('🚫 ปฏิเสธแล้ว'); loadNotifications();
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 async function addGuest(){
-  const name  = document.getElementById('guest-name').value.trim();
-  const plate = document.getElementById('guest-plate').value.trim();
-  const date  = document.getElementById('guest-date').value;
-
-  if (!name){ showToast('กรุณากรอกชื่อแขก'); return; }
-  if (!date){ showToast('กรุณาเลือกวันที่นัด'); return; }
-
+  const name     = document.getElementById('g-name').value.trim();
+  const plate    = document.getElementById('g-plate').value.trim();
+  const province = document.getElementById('g-province').value.trim();
+  const date     = document.getElementById('g-date').value;
+  if (!name)    { showToast('กรุณากรอกชื่อแขก'); return; }
+  if (!plate)   { showToast('กรุณากรอกทะเบียนรถ'); return; }
+  if (!province){ showToast('กรุณาระบุจังหวัด'); return; }
+  if (!date)    { showToast('กรุณาเลือกวันที่นัด'); return; }
+  const fullPlate = plate + ' ' + province;
+  const thDate = new Date(date).toLocaleDateString('th-TH');
   showLoading('กำลังบันทึก...');
   try {
-    // แปลงวันที่เป็น th format
-    const d = new Date(date);
-    const thDate = d.toLocaleDateString('th-TH');
-    await postAPI('preRegister', {
-      guestName: name,
-      plate: plate || '',
-      house: user.house,
-      residentUsername: user.username,
-      date: thDate
-    });
-    hideLoading();
-    showToast('✅ บันทึกการนัดเรียบร้อย');
-    document.getElementById('guest-name').value = '';
-    document.getElementById('guest-plate').value = '';
+    await jsonp('preRegister',{guestName:name,plate:fullPlate,house:user.house,residentUsername:user.username,date:thDate});
+    hideLoading(); showToast('✅ บันทึกการนัดเรียบร้อย');
+    ['g-name','g-plate','g-province'].forEach(id=>document.getElementById(id).value='');
     await loadPreGuests();
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
-// ============================================================
-// API — ใช้ JSONP เพื่อแก้ปัญหา CORS
-// ============================================================
-function jsonpRequest(url){
-  return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    const timer = setTimeout(() => {
-      delete window[cbName];
-      document.body.removeChild(script);
-      reject(new Error('JSONP timeout'));
-    }, 15000);
-    window[cbName] = (data) => {
-      clearTimeout(timer);
-      delete window[cbName];
-      try { document.body.removeChild(script); } catch(e){}
-      resolve(data);
-    };
-    script.src = url + '&callback=' + cbName;
-    script.onerror = () => { clearTimeout(timer); reject(new Error('JSONP error')); };
-    document.body.appendChild(script);
+// PROVINCE AUTOCOMPLETE
+function filterProv(val, listId){
+  const list=document.getElementById(listId);
+  if (!val){ list.style.display='none'; return; }
+  const m=PROVINCES.filter(p=>p.includes(val));
+  if (!m.length){ list.style.display='none'; return; }
+  list.innerHTML=m.slice(0,6).map(p=>{
+    const i=p.indexOf(val);
+    const inputId = listId==='f-prov-list'?'f-province':listId==='g-prov-list'?'g-province':'';
+    return `<div class="p-item" onclick="selProv('${p}','${listId}','${inputId}')">${p.slice(0,i)}<span class="p-match">${p.slice(i,i+val.length)}</span>${p.slice(i+val.length)}</div>`;
+  }).join('');
+  list.style.display='block';
+}
+function selProv(p,listId,inputId){ if(inputId)document.getElementById(inputId).value=p; document.getElementById(listId).style.display='none'; }
+document.addEventListener('click',e=>{ document.querySelectorAll('.province-suggestions').forEach(el=>{ if(!e.target.closest('.province-wrap'))el.style.display='none'; }); });
+
+// JSONP
+function jsonp(action,params){
+  return new Promise((resolve,reject)=>{
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const t=setTimeout(()=>{ delete window[cb]; try{document.body.removeChild(s);}catch(e){} reject(new Error('timeout')); },15000);
+    window[cb]=(d)=>{ clearTimeout(t); delete window[cb]; try{document.body.removeChild(s);}catch(e){} resolve(d); };
+    let url=API_URL+'?action='+action+'&callback='+cb;
+    Object.entries(params).forEach(([k,v])=>{ url+=`&${k}=${encodeURIComponent(v)}`; });
+    s.src=url; s.onerror=()=>{clearTimeout(t);reject(new Error('JSONP error'));}; document.body.appendChild(s);
   });
 }
 
-async function getAPI(action, params){
-  let url = API_URL + '?action=' + action;
-  Object.entries(params).forEach(([k,v]) => { url += `&${k}=${encodeURIComponent(v)}`; });
-  return jsonpRequest(url);
-}
-
-async function postAPI(action, body){
-  let url = API_URL + '?action=' + action;
-  Object.entries(body).forEach(([k,v]) => { if(v !== undefined && v !== null) url += `&${k}=${encodeURIComponent(v)}`; });
-  return jsonpRequest(url);
-}
-
-// ============================================================
-// UI
-// ============================================================
 function showLoading(t){ document.getElementById('load-txt').textContent=t; document.getElementById('loading').classList.add('show'); }
 function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
