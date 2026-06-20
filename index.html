@@ -375,6 +375,24 @@
   <div class="redirect-text" id="redirectText">กำลังเข้าสู่ระบบ...</div>
 </div>
 
+<!-- Guard: เลือกหน้าจอ Gate หรือ Guard Station -->
+<div class="redirect-overlay" id="guardChooseOverlay">
+  <div style="position:relative; display:flex; align-items:center; justify-content:center;">
+    <div class="pulse-ring"></div>
+    <div class="pulse-dot">🛡️</div>
+  </div>
+  <div class="redirect-role-label" style="color:#00a0ff">เลือกหน้าจอที่ใช้งาน</div>
+  <div class="redirect-text" id="guardWelcomeText">ยินดีต้อนรับ</div>
+  <div style="display:flex; flex-direction:column; gap:14px; margin-top:28px; width:100%; max-width:320px; padding:0 20px;">
+    <button onclick="goToGuardScreen('gate')" style="padding:18px; border-radius:14px; border:1px solid rgba(0,160,255,0.3); background:rgba(0,160,255,0.1); color:#00a0ff; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
+      🚗 Gate Station <span style="font-size:11px; opacity:0.6; font-weight:400">(กล้องอ่านทะเบียนรถ)</span>
+    </button>
+    <button onclick="goToGuardScreen('guard')" style="padding:18px; border-radius:14px; border:1px solid rgba(255,160,0,0.3); background:rgba(255,160,0,0.1); color:#ffa000; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
+      🛡️ Guard Station <span style="font-size:11px; opacity:0.6; font-weight:400">(ป้อม รปภ)</span>
+    </button>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // CONFIG — เปลี่ยน API_URL ให้ตรงกับ deploy ของ TaBon
@@ -383,9 +401,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxiPp-xyVNOw6Dm6L9Il3I2
 
 // Role → URL mapping (relative path จาก root)
 const ROLE_REDIRECT = {
-  admin:    'aivsg-ps/admin/',
-  guard:    'aivsg-ps/gate/',
-  resident: 'aivsg-ps/resident/',
+  admin:    'admin/',
+  guard:    'gate/',
+  resident: 'resident/',
 };
 
 const ROLE_LABEL = {
@@ -452,8 +470,12 @@ async function doLogin() {
         house:    result.house || '',
         name:     result.ownerName || '',
       }));
-      // Redirect
-      showRedirect(result.role, result.username, result.house);
+      // Guard role → ให้เลือกหน้าจอก่อน (Gate หรือ Guard Station)
+      if (result.role === 'guard') {
+        showGuardChoice(result.username);
+      } else {
+        showRedirect(result.role, result.username, result.house);
+      }
     } else {
       showError(result?.message || 'Username หรือ Password ไม่ถูกต้อง');
       btn.classList.remove('loading');
@@ -528,6 +550,17 @@ function showRedirect(role, username, house) {
     const dest = ROLE_REDIRECT[role] || ROLE_REDIRECT.resident;
     window.location.href = dest;
   }, 1800);
+}
+
+// Guard role: แสดงหน้าเลือก Gate Station / Guard Station
+function showGuardChoice(username){
+  document.getElementById('guardWelcomeText').textContent = 'ยินดีต้อนรับ ' + username;
+  document.getElementById('guardChooseOverlay').classList.add('show');
+}
+
+function goToGuardScreen(which){
+  // which: 'gate' หรือ 'guard'
+  window.location.href = which + '/';
 }
 
 // ============================================================
