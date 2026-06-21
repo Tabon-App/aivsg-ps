@@ -575,13 +575,20 @@ async function analyzeID(b64){
   document.getElementById('btn-cap-id').disabled = true;
   showLoading('Gemini AI กำลังอ่านบัตรประชาชน...');
   try {
-    // เรียกผ่าน GAS proxy (action=scanID) แทนการเรียก Gemini ตรงจาก browser
-    // GAS เป็นคนถือ API key เพียงผู้เดียว — client ไม่มีทางเห็น key เลย
-    const res = await fetch(API_URL + '?action=scanID', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: b64 })
-    });
-    const sd = await res.json();
+    // เรียกผ่าน GAS proxy แบบ write-then-poll (GAS ไม่รองรับ CORS preflight เลยในทุกกรณี)
+    // ส่งแบบ no-cors (ทางเดียว ไม่มี preflight) แล้ว poll ผลด้วย JSONP แทน
+    const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    fetch(API_URL + '?action=scanID', {
+      method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ requestId, image: b64 })
+    }).catch(()=>{});
+    let sd = null;
+    for (let i = 0; i < 13; i++){
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await jsonp('getScanResult', { requestId });
+      if (res.status !== 'pending'){ sd = res; break; }
+    }
+    if (!sd) sd = { status: 'error' };
     let parseFailed = false;
     let d = {};
     if (sd.status === 'error') {
@@ -741,12 +748,19 @@ async function checkFace(b64){
   document.getElementById('btn-cap-face').disabled = true;
   showLoading('ตรวจสอบคุณภาพรูปใบหน้า...');
   try {
-    // เรียกผ่าน GAS proxy (action=checkFaceQuality) แทนการเรียก Gemini ตรงจาก browser
-    const res = await fetch(API_URL + '?action=checkFaceQuality', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: b64 })
-    });
-    const sd = await res.json();
+    // เรียกผ่าน GAS proxy แบบ write-then-poll (เลี่ยง CORS preflight ที่ GAS ไม่รองรับ)
+    const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    fetch(API_URL + '?action=checkFaceQuality', {
+      method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ requestId, image: b64 })
+    }).catch(()=>{});
+    let sd = null;
+    for (let i = 0; i < 13; i++){
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await jsonp('getScanResult', { requestId });
+      if (res.status !== 'pending'){ sd = res; break; }
+    }
+    if (!sd) sd = { status: 'error', quality: 'bad', reason: 'หมดเวลา' };
     let q = { quality: sd.quality || 'bad', reason: sd.reason || 'ไม่ชัด' };
     if (sd.status === 'error') console.error('checkFaceQuality proxy error:', sd);
     hideLoading();
