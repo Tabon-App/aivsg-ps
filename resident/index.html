@@ -300,14 +300,18 @@ async function loadPreGuests(){
 async function loadNotifications(){
   try {
     const r = await jsonp('getActive',{});
-    const pending = (r.vehicles||[]).filter(v=>v.status==='รอยืนยัน'||(v.type==='ผู้มาติดต่อ'&&(!v.status||v.status==='รอยืนยัน')));
+    // กรองเฉพาะคำขอที่มาหาบ้านนี้เท่านั้น และสถานะยังรอยืนยันอยู่
+    const pending = (r.vehicles||[]).filter(v =>
+      v.house === user.house &&
+      (v.status === 'รอยืนยัน' || (v.type === 'ผู้มาติดต่อ' && (!v.status || v.status === 'รอยืนยัน')))
+    );
     renderNotifications(pending, r.vehicles||[]);
   } catch(e){ renderNotifications([],[]); }
 }
 async function pollNotif(){
   try {
     const r = await jsonp('getActive',{});
-    const pending = (r.vehicles||[]).filter(v=>v.status==='รอยืนยัน');
+    const pending = (r.vehicles||[]).filter(v => v.house === user.house && v.status==='รอยืนยัน');
     if (pending.length) document.getElementById('notif-dot').classList.add('show');
   } catch(e){}
 }
@@ -331,7 +335,7 @@ function renderNotifications(pending, all){
     <div class="notif-card pending">
       <span class="notif-type pending">⚠️ รอการอนุมัติ</span>
       <div class="notif-plate">${v.plate}</div>
-      <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} • ${v.entryTime||''}</div>
+      <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} · ${v.entryTime||''}</div>
       <div class="notif-photos"><div class="notif-photo">🪪</div><div class="notif-photo">🚗</div><div class="notif-photo">🧑</div></div>
       <div class="approve-btns">
         <button class="btn-approve" onclick="approveGuest('${v.plate}')">✅ อนุญาต</button>
@@ -342,7 +346,7 @@ function renderNotifications(pending, all){
     <div class="notif-card entry">
       <span class="notif-type entry">✅ รถเข้าแล้ว</span>
       <div class="notif-plate">${v.plate}</div>
-      <div class="notif-info">ลูกบ้าน • AUTO • ${v.entryTime||''}</div>
+      <div class="notif-info">ลูกบ้าน · AUTO · ${v.entryTime||''}</div>
     </div>`).join('');
 }
 
@@ -355,8 +359,8 @@ function renderVehicles(){
       <div class="v-header">
         <div>
           <div class="v-plate">${v.plate||''}</div>
-          <div class="v-detail">${icons[v.type]||'🚗'} ${v.brand||'—'} ${v.color?'• สี'+v.color:''} • ${v.type||'—'}</div>
-          <div class="v-reg">ลงทะเบียนโดย ${v.regBy||'—'} • ${v.method||'—'}</div>
+          <div class="v-detail">${icons[v.type]||'🚗'} ${v.brand||'—'} ${v.color?'· สี'+v.color:''} · ${v.type||'—'}</div>
+          <div class="v-reg">ลงทะเบียนโดย ${v.regBy||'—'} · ${v.method||'—'}</div>
         </div>
         <div class="v-actions">
           <button class="btn-edit" onclick="editVehicle(${i})">✏️ แก้ไข</button>
@@ -430,8 +434,17 @@ async function saveVehicle(){
   const fullPlate = plate + ' ' + province;
   showLoading('กำลังบันทึก...');
   try {
-    await jsonp('registerVehicle', { plate:fullPlate, owner:user.name||user.username, house:user.house, phone:'', brand, color, type, regBy:user.username, method:'ลงทะเบียนผ่านแอป' });
+    const result = await jsonp('registerVehicle', { plate:fullPlate, owner:user.name||user.username, house:user.house, phone:'', brand, color, type, regBy:user.username, method:'ลงทะเบียนผ่านแอป' });
     hideLoading();
+    // เช็คผลลัพธ์จริงจาก GAS ก่อนแสดงข้อความ — กันแจ้ง "สำเร็จ" ทั้งที่จริงไม่สำเร็จ
+    if (result.status === 'duplicate'){
+      showToast('⚠️ ทะเบียนนี้มีในระบบแล้ว');
+      return;
+    }
+    if (result.status === 'error'){
+      showToast('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+      return;
+    }
     showToast('✅ บันทึกรถเรียบร้อย');
     hideVehicleForm();
     await loadVehicles();
@@ -439,8 +452,19 @@ async function saveVehicle(){
 }
 
 async function deleteVehicle(i){
-  if (!confirm('ยืนยันลบรถ ' + myVehicles[i].plate + '?')) return;
-  showToast('⚠️ ฟีเจอร์ลบรถต้องแก้ Apps Script เพิ่ม — จะทำในรอบถัดไปครับ');
+  const v = myVehicles[i];
+  if (!confirm('ยืนยันลบรถ ' + v.plate + '?')) return;
+  showLoading('กำลังลบ...');
+  try {
+    const result = await jsonp('deleteVehicle', { plate: v.plate, house: user.house });
+    hideLoading();
+    if (result.status === 'deleted'){
+      showToast('✅ ลบรถเรียบร้อย');
+      await loadVehicles();
+    } else {
+      showToast('❌ ' + (result.message || 'ลบไม่สำเร็จ'));
+    }
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 // ACTIONS
