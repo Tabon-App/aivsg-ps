@@ -213,6 +213,8 @@ input[type=file]{display:none}
   <div class="camera-wrap id-cam" id="cam-id-wrap">
     <video id="vid-id" autoplay playsinline muted></video>
     <canvas id="cvs-id"></canvas>
+    <button onclick="switchCamID()" style="position:absolute;top:10px;right:10px;z-index:5;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer">🔄 สลับกล้อง</button>
+    <div id="id-cam-label" style="position:absolute;bottom:10px;left:10px;z-index:5;background:rgba(0,0,0,0.6);color:#0f8;font-size:11px;padding:3px 8px;border-radius:10px">📷 กล้องหน้า</div>
     <div class="cam-overlay">
       <div class="scan-frame id-frame">
         <div class="corner tl"></div><div class="corner tr"></div>
@@ -263,7 +265,7 @@ input[type=file]{display:none}
     <div class="result-card err" id="id-card-err" style="display:none">
       <div class="rc-icon">❓</div>
       <div class="rc-title">อ่านบัตรไม่ได้</div>
-      <div class="rc-sub">วางบัตรในกรอบให้ชัด แล้วถ่ายใหม่</div>
+      <div class="rc-sub" id="id-card-err-detail">วางบัตรในกรอบให้ชัด แล้วถ่ายใหม่</div>
       <button class="btn-main orange" onclick="retakeID()">🔄 ถ่ายใหม่</button>
     </div>
   </div>
@@ -274,6 +276,8 @@ input[type=file]{display:none}
   <div class="camera-wrap face-cam">
     <video id="vid-face" autoplay playsinline muted></video>
     <canvas id="cvs-face"></canvas>
+    <button onclick="switchCamFace()" style="position:absolute;top:10px;right:10px;z-index:5;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer">🔄 สลับกล้อง</button>
+    <div id="face-cam-label" style="position:absolute;bottom:10px;left:10px;z-index:5;background:rgba(0,0,0,0.6);color:#0f8;font-size:11px;padding:3px 8px;border-radius:10px">📷 กล้องหน้า</div>
     <div class="cam-overlay">
       <div class="scan-frame face-frame">
         <div class="corner tl fc"></div><div class="corner tr fc"></div>
@@ -524,17 +528,28 @@ function resetFlow(){
 // ============================================================
 // CAMERA — ID
 // ============================================================
-async function startCamID(){
+let idCamFacing = 'user'; // กล้องหน้าเป็นค่าเริ่มต้นสำหรับถ่ายบัตร (ผู้ใช้สลับเองได้)
+async function startCamID(facing){
+  facing = facing || idCamFacing;
   setCamStat('id','กำลังเปิดกล้อง...','');
   document.getElementById('btn-cap-id').disabled = true;
   try {
+    if (streamID){ streamID.getTracks().forEach(t=>t.stop()); }
     streamID = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:960} }
+      video:{ facingMode:facing, width:{ideal:1280}, height:{ideal:960} }
     });
     document.getElementById('vid-id').srcObject = streamID;
+    idCamFacing = facing;
+    const lbl = document.getElementById('id-cam-label');
+    if (lbl) lbl.textContent = facing === 'user' ? '📷 กล้องหน้า' : '📷 กล้องหลัง';
     setCamStat('id','วางบัตรในกรอบ — แล้วถ่าย','live');
     document.getElementById('btn-cap-id').disabled = false;
   } catch(e){ setCamStat('id','ไม่พบกล้อง — ใช้อัปโหลด',''); }
+}
+
+function switchCamID(){
+  const next = idCamFacing === 'user' ? 'environment' : 'user';
+  startCamID(next);
 }
 
 function stopCamID(){
@@ -562,15 +577,27 @@ async function analyzeID(b64){
   showLoading('Gemini AI กำลังอ่านบัตรประชาชน...');
   try {
     const prompt = `คุณคือระบบอ่านบัตรประชาชนไทย/ใบขับขี่
-ตอบ JSON เท่านั้น ห้าม markdown:
+ตอบ JSON เท่านั้น ห้าม markdown ห้ามมีข้อความอื่นนอกเหนือจาก JSON object:
 {"name":"ชื่อ-สกุลภาษาไทย","idNumber":"เลขบัตร 13 หลัก","dob":"วันเดือนปีเกิด","address":"ที่อยู่บนบัตร"}
-ถ้าไม่ใช่บัตร: {"name":"","idNumber":"","dob":"","address":""}`;
+ถ้าไม่ใช่บัตรหรืออ่านไม่ออกเลย: {"name":"","idNumber":"","dob":"","address":""}`;
     const res  = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
       generationConfig:{temperature:0.1,maxOutputTokens:300}})});
     const data = await res.json();
-    let d={};
-    try{ d=JSON.parse((data.candidates?.[0]?.content?.parts?.[0]?.text||'{}').replace(/```json|```/g,'').trim()); }catch(e){}
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let d = {};
+    let parseFailed = false;
+    try {
+      // ลอกคราบ markdown code fence ออกก่อน
+      let cleaned = rawText.replace(/```json|```/g,'').trim();
+      // ดึงเฉพาะส่วนที่เป็น JSON object ออกมา (กันกรณี Gemini พูดนำหน้า/ต่อท้าย)
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) cleaned = match[0];
+      d = JSON.parse(cleaned);
+    } catch(e) {
+      parseFailed = true;
+      console.error('JSON parse failed. Raw Gemini response:', rawText);
+    }
     hideLoading();
     document.getElementById('id-result').style.display = 'block';
     document.getElementById('id-thumb').src = 'data:image/jpeg;base64,'+b64;
@@ -590,7 +617,7 @@ async function analyzeID(b64){
         const exp = await jsonp('checkExpectedByName', { name: d.name, house: st.house });
         if (exp.found){
           document.getElementById('exp-detail').textContent =
-            'ชื่อ: ' + exp.guestName + ' • มาหาบ้าน ' + exp.house;
+            'ชื่อ: ' + exp.guestName + ' · มาหาบ้าน ' + exp.house;
           document.getElementById('exp-regby').textContent = exp.regBy || 'ลูกบ้าน';
           document.getElementById('id-card-expected').style.display = 'block';
           document.getElementById('id-card-ok').style.display = 'none';
@@ -607,6 +634,13 @@ async function analyzeID(b64){
     } else {
       document.getElementById('id-card-ok').style.display  = 'none';
       document.getElementById('id-card-err').style.display = 'block';
+      // แสดงเหตุผลจริงว่าทำไมถึงอ่านไม่ได้ — ช่วยแยกแยะว่าเป็นปัญหาภาพ หรือ Gemini ตอบแปลก
+      const errDetail = document.getElementById('id-card-err-detail');
+      if (errDetail) {
+        errDetail.textContent = parseFailed
+          ? 'ระบบแปลผล AI ไม่สำเร็จ (รูปแบบคำตอบผิดปกติ) — ลองถ่ายใหม่อีกครั้ง'
+          : 'AI อ่านบัตรไม่เจอข้อมูล — วางบัตรในกรอบให้ชัด ไม่สะท้อนแสง';
+      }
       setCamStat('id','อ่านไม่ได้ — ถ่ายใหม่','');
     }
   } catch(e){
@@ -658,21 +692,43 @@ function ignoreExpected(){
 // ============================================================
 // CAMERA — FACE
 // ============================================================
-async function startCamFace(){
+let faceCamFacing = 'user';
+async function startCamFace(facing){
+  facing = facing || faceCamFacing;
   setCamStat('face','กำลังเปิดกล้อง...','');
   document.getElementById('btn-cap-face').disabled = true;
   document.getElementById('face-result').style.display = 'none';
-  // ลอง front camera ก่อน fallback environment
-  for (const facing of ['user','environment']){
+  if (streamFace){ streamFace.getTracks().forEach(t=>t.stop()); }
+  try {
+    streamFace = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
+    document.getElementById('vid-face').srcObject = streamFace;
+    faceCamFacing = facing;
+    const lbl = document.getElementById('face-cam-label');
+    if (lbl) lbl.textContent = facing === 'user' ? '📷 กล้องหน้า' : '📷 กล้องหลัง';
+    setCamStat('face','มองตรงกล้อง — แล้วถ่าย','live');
+    document.getElementById('btn-cap-face').disabled = false;
+    return;
+  } catch(e){
+    // ถ้ากล้องที่เลือกไม่มี ลองอีกแบบ
+    const fallback = facing === 'user' ? 'environment' : 'user';
     try {
-      streamFace = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
+      streamFace = await navigator.mediaDevices.getUserMedia({video:{facingMode:fallback}});
       document.getElementById('vid-face').srcObject = streamFace;
+      faceCamFacing = fallback;
+      const lbl = document.getElementById('face-cam-label');
+      if (lbl) lbl.textContent = fallback === 'user' ? '📷 กล้องหน้า' : '📷 กล้องหลัง';
       setCamStat('face','มองตรงกล้อง — แล้วถ่าย','live');
       document.getElementById('btn-cap-face').disabled = false;
       return;
-    } catch(e){}
+    } catch(e2){
+      setCamStat('face','ไม่พบกล้อง','');
+    }
   }
-  setCamStat('face','ไม่พบกล้อง','');
+}
+
+function switchCamFace(){
+  const next = faceCamFacing === 'user' ? 'environment' : 'user';
+  startCamFace(next);
 }
 
 function stopCamFace(){
@@ -827,7 +883,7 @@ async function finalOpen(approvedBy){
       house    : st.house,
       plate    : pendingPlate,
       type     : gateMode,
-      note     : approvedBy + ' • คุณภาพรูป:' + (st.faceOk?'ดี':'ไม่ชัด'),
+      note     : approvedBy + ' · คุณภาพรูป:' + (st.faceOk?'ดี':'ไม่ชัด'),
       station  : 'ป้อม รปภ'
     });
     // ส่งรูปบัตร + รูปหน้า ไปเก็บ Drive (no-cors, ไม่รอผล)
@@ -872,7 +928,7 @@ async function pinSubmit(){
         <div class="result-card ok">
           <div class="rc-icon">✅</div>
           <div class="rc-title">PIN ถูกต้อง</div>
-          <div class="rc-sub">บ้านเลขที่ ${house} • ${name}</div>
+          <div class="rc-sub">บ้านเลขที่ ${house} · ${name}</div>
           <button class="btn-main green" onclick="logPinEntry('${house}','${name}')">💾 บันทึก ${gateMode==='entry'?'เข้า':'ออก'}</button>
         </div>`;
     } else {
