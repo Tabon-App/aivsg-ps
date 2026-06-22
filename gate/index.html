@@ -419,22 +419,64 @@ async function startCamera(){
   setCamStatus('กำลังเปิดกล้อง...', false);
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720} }
+      video:{
+        facingMode: 'environment',
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 },
+        focusMode: { ideal: 'continuous' }  // ขอ continuous autofocus ถ้ากล้องรองรับ
+      }
     });
-    document.getElementById('video').srcObject = stream;
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+
+    // ตั้งค่า advanced focus ผ่าน ImageCapture API (รองรับบน Android Chrome)
+    const track = stream.getVideoTracks()[0];
+    if (track && typeof track.applyConstraints === 'function') {
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(()=>{});
+      }
+    }
+
     setCamStatus('กล้องพร้อม', false);
   } catch(e){
     setCamStatus('ไม่พบกล้อง', false);
   }
 }
 
+// สั่ง focus ที่กึ่งกลางภาพก่อน capture (tap-to-focus) แล้วรอให้ focus ทันก่อนถ่าย
+async function focusAndCapture(){
+  const track = stream && stream.getVideoTracks && stream.getVideoTracks()[0];
+  if (track && typeof track.applyConstraints === 'function') {
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.focusMode && caps.focusMode.includes('manual') && caps.focusDistance) {
+      // ลอง tap-to-focus ที่กึ่งกลาง
+      try {
+        await track.applyConstraints({ advanced: [{ focusMode: 'single-shot', pointsOfInterest: [{ x: 0.5, y: 0.6 }] }] });
+        await new Promise(r => setTimeout(r, 600)); // รอ 0.6 วิให้ focus ก่อน
+      } catch(e){}
+    }
+  }
+  return captureFrame();
+}
+
 function captureFrame(){
   const video = document.getElementById('video');
   const c = document.getElementById('canvas-main');
-  c.width = video.videoWidth || 1280;
-  c.height = video.videoHeight || 720;
-  c.getContext('2d').drawImage(video, 0, 0);
-  lastB64 = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+  const vw = video.videoWidth  || 1280;
+  const vh = video.videoHeight || 720;
+
+  // crop โซนกลาง-ล่าง แต่ขยายให้ครอบคลุมมากขึ้น (5-95% แนวนอน, 20-95% แนวตั้ง)
+  // เผื่อป้ายอยู่ต่ำหรือสูงกว่าปกติตามมุมกล้องและขนาดรถ
+  const sx = Math.round(vw * 0.05);
+  const sy = Math.round(vh * 0.20);
+  const sw = Math.round(vw * 0.90);
+  const sh = Math.round(vh * 0.75);
+
+  c.width  = sw;
+  c.height = sh;
+  c.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+  lastB64 = c.toDataURL('image/jpeg', 0.92).split(',')[1];
   return lastB64;
 }
 
@@ -544,18 +586,28 @@ async function triggerAutoScan(){
   if (isScanning) return;
   isScanning = true;
   cooldown = true;
-  const b64 = captureFrame();
-  setCamStatus('🔍 Gemini อ่านทะเบียน...', true);
+
+  // Burst capture 3 ภาพ ห่างกัน 500ms — รถวิ่งเข้ามา จะได้ภาพในระยะต่างกันอัตโนมัติ
+  setCamStatus('📸 Burst capture...', true);
+  const b64_1 = captureFrame();
+  await new Promise(r => setTimeout(r, 500));
+  const b64_2 = captureFrame();
+  await new Promise(r => setTimeout(r, 500));
+  const b64_3 = captureFrame();
+  const images = [b64_1, b64_2, b64_3];
+
+  setCamStatus('🔍 Gemini อ่านทะเบียน (3 ภาพ)...', true);
   try {
-    const info = await scanVehicleViaProxy(b64);
+    const info = await scanVehicleViaProxy(images);
     if (!info.plate){
       setCamStatus('ไม่เจอทะเบียน — รอรถใหม่', false);
       setTimeout(() => { cooldown = false; isScanning = false; setCamStatus('รอรถเข้าเฟรม', false); }, 3000);
       return;
     }
-    setCamStatus('✅ พบ: ' + info.plate, false);
-    showToast('🚗 พบทะเบียน: ' + info.plate);
-    await checkPlate(info.plate, b64, info);
+    const voteInfo = info.voteWin ? ` (${info.voteWin}/${info.scanCount})` : '';
+    setCamStatus('✅ พบ: ' + info.plate + voteInfo, false);
+    showToast('🚗 พบทะเบียน: ' + info.plate + voteInfo);
+    await checkPlate(info.plate, b64_3, info); // ใช้ภาพที่ 3 (ใกล้สุด) เป็น photo หลัก
   } catch(e){
     console.error('triggerAutoScan error:', e);
     setCamStatus('❌ ' + e.message, false);
@@ -569,20 +621,21 @@ async function triggerAutoScan(){
 
 // ============================================================
 
-// เรียก Gemini ผ่าน GAS proxy แบบ write-then-poll:
-// GAS Web App ไม่รองรับ CORS preflight เลยไม่ว่ากรณีใด จึงต้องส่งแบบ no-cors (ทางเดียว ไม่มี preflight)
-// แล้วใช้ JSONP (ผ่าน <script> tag เดิมของระบบ) มา poll ผลลัพธ์แทนการรอ response ตรงๆ
-async function scanVehicleViaProxy(b64){
+async function scanVehicleViaProxy(input){
+  // รับได้ทั้ง single string (b64) และ array (burst 3 ภาพ)
+  const images = Array.isArray(input) ? input : [input];
   const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  // ขั้นที่ 1: ส่งรูปไปคิว (fire-and-forget — ไม่อ่าน response เลย จึงไม่เกิด preflight)
+
+  // ขั้นที่ 1: ส่ง burst images ไปคิว (fire-and-forget — no-cors ไม่เกิด preflight)
   fetch(API_URL + '?action=scanVehicle', {
     method: 'POST', mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ requestId, image: b64 })
+    body: JSON.stringify({ requestId, images })
   }).catch(()=>{});
-  // ขั้นที่ 2: poll ผลลัพธ์ด้วย JSONP ทุก 1.5 วิ จนกว่าจะได้ผล (สูงสุด ~20 วิ)
+
+  // ขั้นที่ 2: poll ผลลัพธ์ด้วย JSONP ทุก 1.5 วิ (สูงสุด ~25 วิ เพราะ 3 ภาพใช้เวลามากขึ้น)
   let d = null;
-  for (let i = 0; i < 13; i++){
+  for (let i = 0; i < 17; i++){
     await new Promise(r => setTimeout(r, 1500));
     const res = await jsonp('getScanResult', { requestId });
     if (res.status !== 'pending'){ d = res; break; }
@@ -590,15 +643,16 @@ async function scanVehicleViaProxy(b64){
   if (!d) throw new Error('สแกนใช้เวลานานเกินไป — ลองใหม่');
   if (d.status === 'error'){
     console.error('scanVehicle proxy error:', d);
-    if (d.raw) console.error('Raw Gemini response via proxy:', d.raw);
     throw new Error(d.message || 'Gemini proxy error');
   }
   return {
-    plate: (d.plate||'').trim(),
-    province: (d.province||'').trim(),
-    brand: (d.brand||'').trim(),
-    color: (d.color||'').trim(),
-    hasVehicle: !!d.hasVehicle
+    plate:      (d.plate     ||'').trim(),
+    province:   (d.province  ||'').trim(),
+    brand:      (d.brand     ||'').trim(),
+    color:      (d.color     ||'').trim(),
+    hasVehicle: !!d.hasVehicle,
+    scanCount:  d.scanCount  || 1,
+    voteWin:    d.voteWin    || 1
   };
 }
 
@@ -635,7 +689,7 @@ function setMode(mode){
 // ============================================================
 async function captureAndScan(){
   if (autoMode) return;
-  const b64 = captureFrame();
+  const b64 = await focusAndCapture();
   showLoading('Gemini AI กำลังอ่านทะเบียน...');
   try {
     const info = await scanVehicleViaProxy(b64);
@@ -831,7 +885,7 @@ async function logExit(plate, house){
 // ============================================================
 async function startIdScan(plate){
   showLoading('Gemini กำลังอ่านบัตรประชาชน...');
-  const b64 = captureFrame();
+  const b64 = await focusAndCapture();
   try {
     const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     fetch(API_URL + '?action=scanID', {
