@@ -749,6 +749,8 @@ function showResult_resident(plate, d, b64){
       <button class="btn-deny" onclick="clearResult()">✕</button>
     </div>
   </div>`);
+  // เรียก openGate อัตโนมัติทันที — ลูกบ้านไม่ต้องรอกดปุ่ม
+  openGate(plate, 'resident', d.house||'', d.phone||'', d.brand||'', d.color||'');
 }
 
 function showResult_expected(plate, d, b64){
@@ -762,6 +764,8 @@ function showResult_expected(plate, d, b64){
       <button class="btn-deny" onclick="clearResult()">✕</button>
     </div>
   </div>`);
+  // เรียก openGate อัตโนมัติทันที — แขกที่จองล่วงหน้าไม่ต้องรอกดปุ่ม
+  openGate(plate, 'expected', d.house||'', '', '', '');
 }
 
 function showResult_visitor(plate, d, b64, info){
@@ -818,7 +822,8 @@ function showResult_exit(plate, d, b64){
       : `<div class="cd-wrap"><div class="cd-num" id="cd-num">60</div><div class="cd-lbl">วินาที — รอลูกบ้านยืนยัน</div></div>
          <div class="action-btns"><button class="btn-open" onclick="logExit('${plate}','${d.house||''}')">🔓 Override เปิด</button><button class="btn-deny" onclick="denyExit()">✕ ปฏิเสธ</button></div>`}
   </div>`);
-  if (!isAuto) startCd(plate, d.house||'');
+  if (isAuto) logExit(plate, d.house||''); // เรียก logExit อัตโนมัติถ้าเป็นลูกบ้าน
+  else startCd(plate, d.house||'');
 }
 
 function showResult_exit_notfound(plate, b64){
@@ -851,7 +856,7 @@ async function openGate(plate, type, house, phone, brand, color){
         body: JSON.stringify({ plate, photo:photoB64, direction:'entry', type, approvedBy:type==='resident'?'AUTO':guardInfo.username })
       }).catch(()=>{});
     }
-    await jsonp('logEntry', { plate, type, house, phone, brand, color, approvedBy:type==='resident'?'AUTO':guardInfo.username, status:type, guestName:'' });
+    await jsonp('logEntry', { plate, type, house, phone, brand, color, approvedBy:type==='resident'?'AUTO':type==='expected'?'AUTO-PreReg':guardInfo.username, status:type==='expected'?'Pre-registration':type, guestName:'' });
     hideLoading();
     addLog(plate, type==='resident'?'เข้า-AUTO':'เข้า', type==='resident'?'ok':'warn');
     showToast('✅ บันทึกแล้ว — เปิดประตู!');
